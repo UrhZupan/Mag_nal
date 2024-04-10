@@ -11,7 +11,8 @@ import time
 import matplotlib.pyplot as plt
 
 from Dataset_separate import CustomDatasetRGB, CustomDatasetDepth
-from Model_2 import UNet2 as UNet_model_2 # originalen prirejen UNet model
+from Model_3 import UNet3 as UNet_model_3 # originalen ZMANJSAN UNet model
+#from Model_2 import UNet2 as UNet_model_2 # originalen prirejen UNet model
 #from Model_1 import UNet1 as UNet_model_1 # poenostavljen UNet model 
 
 start = time.time()
@@ -40,7 +41,7 @@ transform_high_res_rgb = transforms.Compose([
 
 # FIX OUTPUT DIMENSIONS --> Output tensor size:  torch.Size([1, 1, 228, 372])
 transform_high_res_depth = transforms.Compose([
-    transforms.Resize((228, 372)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
+    transforms.Resize((384, 520)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
     transforms.ToTensor() # convert to tensor
     #, transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )
     #, transforms.Normalize((0,), (255,)) 
@@ -83,7 +84,7 @@ test_depth_down_loader = DataLoader(test_depth_down_dataset, batch_size=1, shuff
 
 
 # 2) MODEL
-model = UNet_model_2().to(device)
+model = UNet_model_3().to(device)
 
 
 # 3) OPTIMIZER AND LOSS
@@ -106,8 +107,10 @@ print("len(train_rgb_loader): ", n_total_steps)
 
 for epoch in range(num_epochs):
     for i, (rgb, depth_down, depth_correct) in enumerate(zip(train_rgb_loader, train_depth_down_loader, train_depth_loader)):
+        tries = 10
+        
         # Just 5 tries
-        if i > 4: 
+        if i > tries: 
             print("THE END ")
             break
         
@@ -131,10 +134,24 @@ for epoch in range(num_epochs):
         optimizer.step() # update the parameters
         
         # Print the loss
-        if (i+1) % 1 == 0: # CHANGE LATER
+        if (i+1) % 2 == 0: # CHANGE LATER
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
-    
-                
+
+        # Prikaz rezultatov v zadnjo
+        if i == tries:
+            # show the both outputs
+            #fig, axes = plt.subplots(1, 2)
+            print(outputs_predicted[1][0].shape, depth_correct_output[1][0].shape)
+            # both shapes: torch.Size([4, 1, 384, 520])
+            #axes[0].imshow(outputs_predicted[1][0], cmap='gray')
+            #axes[0].set_title('Predicted')
+            
+            #axes[1].imshow(depth_correct_output[1][0], cmap='gray')
+            #axes[1].set_title('Correct')
+            
+            #for ax in axes:
+                #ax.axis('off')
+            #plt.show()
 
 # 5) TESTING
 # To be continued

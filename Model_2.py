@@ -55,7 +55,7 @@ class UNet2(nn.Module):
         # Zadnja konvolucija
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1) # PRI OUTPUTU RABIMO 1 KANAL
         
-    def forward(self, rgb_image, depth_image_down): # dodaj se depth_image_down
+    def forward(self, rgb_image, depth_image_down): 
         
         # Encoder
         x1 = self.down_conv_1(rgb_image) #
