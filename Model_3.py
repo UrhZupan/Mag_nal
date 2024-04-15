@@ -81,9 +81,10 @@ class UNet3(nn.Module):
     
 #rgb_input = torch.randn(1, 3, 427, 561)
 #rgb_input = torch.randn(1, 3, 572, 572)
+#rgb_input = torch.randn(1, 3, 106, 140)
 #depth_input = torch.randn(1, 1, 10, 10)
 #model = UNet3().to(device='cuda' if torch.cuda.is_available() else 'cpu')
 #output1 = model.forward(rgb_input, depth_input)
 #print("Output tensor size: ", output1.size())
 
-"""output size in pix: 384 x 520"""
+#"""output size in pix: 384 x 520"""

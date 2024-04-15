@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
@@ -30,27 +30,29 @@ learning_rate = 0.001
 
 # For grayscale:
 # transforms.Normalize((0,), (255,)) # Normalize between 0 and 255
-# transforms.Normalize((0.5,), (0.5,))  # Normalize between -1 and 1
+# transforms.Normalize((0.5,), (0.5,))  # Normalize between -1 and 1 [? transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )]
 
 transform_high_res_rgb = transforms.Compose([
-    transforms.Resize((427, 561)),
+    transforms.Resize((106, 140)),
     transforms.ToTensor() # convert to tensor
     #, transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )
     #, transforms.Normalize((0,), (255,)) 
 ])
 
-# FIX OUTPUT DIMENSIONS --> Output tensor size:  torch.Size([1, 1, 228, 372])
+# FIX OUTPUT DIMENSIONS 
+# Model_3: Input tensor size: torch.Size([1, 3, 427, 561]) --> Output tensor size:  torch.Size([1, 1, 228, 372])
+# Model_3: Input tensor size: torch.Size([1, 3, 106, 140]) --> Output tensor size:  torch.Size([1, 1, 64, 100])
 transform_high_res_depth = transforms.Compose([
-    transforms.Resize((384, 520)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
+    transforms.Resize((64, 100)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
     transforms.ToTensor() # convert to tensor
-    #, transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )
+    #, transforms.Normalize((0.5,), (0.5,))
     #, transforms.Normalize((0,), (255,)) 
 ])
 
 transform_low_res_depth = transforms.Compose([
     transforms.Resize((10, 10)),
     transforms.ToTensor() # convert to tensor
-    #, transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )
+    #, transforms.Normalize((0.5,), (0.5,))
     #, transforms.Normalize((0,), (255,)) 
 ])
 
@@ -107,7 +109,7 @@ print("len(train_rgb_loader): ", n_total_steps)
 
 for epoch in range(num_epochs):
     for i, (rgb, depth_down, depth_correct) in enumerate(zip(train_rgb_loader, train_depth_down_loader, train_depth_loader)):
-        tries = 10
+        tries = 200
         
         # Just 5 tries
         if i > tries: 
@@ -134,24 +136,25 @@ for epoch in range(num_epochs):
         optimizer.step() # update the parameters
         
         # Print the loss
-        if (i+1) % 2 == 0: # CHANGE LATER
+        if (i+1) % 20 == 0: # CHANGE LATER
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
         # Prikaz rezultatov v zadnjo
         if i == tries:
-            # show the both outputs
-            #fig, axes = plt.subplots(1, 2)
-            print(outputs_predicted[1][0].shape, depth_correct_output[1][0].shape)
-            # both shapes: torch.Size([4, 1, 384, 520])
-            #axes[0].imshow(outputs_predicted[1][0], cmap='gray')
-            #axes[0].set_title('Predicted')
+            with torch.no_grad():
+                # show the both outputs
+                fig, axes = plt.subplots(1, 2)
+                print(outputs_predicted[1][0].shape, depth_correct_output[1][0].shape)
+                # both shapes: torch.Size([4, 1, 384, 520])
+                axes[0].imshow(outputs_predicted[0][0], cmap='gray')
+                axes[0].set_title('Predicted')
             
-            #axes[1].imshow(depth_correct_output[1][0], cmap='gray')
-            #axes[1].set_title('Correct')
+                axes[1].imshow(depth_correct_output[0][0], cmap='gray')
+                axes[1].set_title('Correct')
             
-            #for ax in axes:
-                #ax.axis('off')
-            #plt.show()
+                for ax in axes:
+                    ax.axis('off')
+                plt.show()
 
 # 5) TESTING
 # To be continued
