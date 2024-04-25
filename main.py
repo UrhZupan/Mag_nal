@@ -106,14 +106,14 @@ else:
 
 n_total_steps = len(train_rgb_loader)
 print("len(train_rgb_loader): ", n_total_steps)
-
+loss_plot = []
 for epoch in range(num_epochs):
     for i, (rgb, depth_down, depth_correct) in enumerate(zip(train_rgb_loader, train_depth_down_loader, train_depth_loader)):
-        tries = 200
+        tries = 150
         
         # Just 5 tries
         if i > tries: 
-            print("THE END ")
+            print("THE END OF TRAINING")
             break
         
         # rgb = input 1
@@ -134,9 +134,10 @@ for epoch in range(num_epochs):
         optimizer.zero_grad() # empty the gradients
         loss.backward() # backpropagation
         optimizer.step() # update the parameters
+        loss_plot.append(loss.item())
         
         # Print the loss
-        if (i+1) % 20 == 0: # CHANGE LATER
+        if (i+1) % 30 == 0: # CHANGE LATER
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
         # Prikaz rezultatov v zadnjo
@@ -156,8 +157,67 @@ for epoch in range(num_epochs):
                     ax.axis('off')
                 plt.show()
 
+plt.plot(loss_plot)
+plt.ylabel("LOSS")
+plt.xlabel("i")
+plt.grid()
+plt.show()
+
 # 5) TESTING
-# To be continued
+
+print("\nTESTING PHASE")
+
+def similarity_percentage(tensor1, tensor2, threshold=0):
+    # Calculate absolute difference between corresponding pixels
+    pixel_diff = torch.abs(tensor1 - tensor2)
+    
+    # Calculate percentage of pixels that meet the threshold
+    num_pixels = tensor1.numel()
+    num_similar_pixels = torch.sum(pixel_diff <= threshold)
+    similarity_percentage = (num_similar_pixels / num_pixels) * 100
+    
+    return similarity_percentage.item()
+
+accuracy_1 = []
+accuracy_3 = []
+accuracy_5 = []
+with torch.no_grad():
+    for i, (rgb_T, depth_down_T, depth_correct_T) in enumerate(zip(test_rgb_loader, test_depth_down_loader, test_depth_loader)):
+        rgb_T = rgb_T.to(device)
+        depth_down_T = depth_down_T.to(device)
+        depth_correct_T = depth_correct_T.to(device)
+        
+        # Make forward pass WITHOUT CALCULATING THE GRADIENTS AND WITHOUT BACKWARD PASS
+        depth_predicted_T = model.forward(rgb_T, depth_down_T)
+        #if i==0:
+            #print("PREDICTED shape: ", depth_predicted_T.shape, "\tCORRECT shape: ", depth_correct_T.shape)
+        
+        
+        # Show some results
+        if i == 0:
+            print(depth_correct_T[0, 0, :2, :2])
+            print(depth_predicted_T[0, 0, :2, :2])
+        
+        # Calculate accuracy
+        similarity_1 = similarity_percentage(depth_correct_T, depth_predicted_T, threshold=0.01) # 1% error allowed
+        accuracy_1.append(similarity_1)
+        similarity_3 = similarity_percentage(depth_correct_T, depth_predicted_T, threshold=0.03) # 3% error allowed
+        accuracy_3.append(similarity_3)
+        similarity_5 = similarity_percentage(depth_correct_T, depth_predicted_T, threshold=0.05) # 5% error allowed
+        accuracy_5.append(similarity_5)
+
+
+# Print accuracy
+cnn_accuracy_1 = sum(accuracy_1) / len(accuracy_1)
+cnn_accuracy_3 = sum(accuracy_3) / len(accuracy_3)
+cnn_accuracy_5 = sum(accuracy_5) / len(accuracy_5)
+
+print(f"Accuracy (1% error): {cnn_accuracy_1:.1f}%")
+print(f"Accuracy (3% error): {cnn_accuracy_3:.1f}%")
+print(f"Accuracy (5% error): {cnn_accuracy_5:.1f}%")
+    
+# Save the model under a name
+
 
 end = time.time()
 print(f'{(end - start):.4f}, s')
