@@ -28,6 +28,7 @@ learning_rate = 0.001
 
 # 1) DATASET
 
+print("\nDATA PREPARATION PHASE")
 # For grayscale:
 # transforms.Normalize((0,), (255,)) # Normalize between 0 and 255
 # transforms.Normalize((0.5,), (0.5,))  # Normalize between -1 and 1 [? transforms.Normalize( (0.5,0.5,0.5),(0.5,0.5,0.5) )]
@@ -84,6 +85,8 @@ test_depth_down_loader = DataLoader(test_depth_down_dataset, batch_size=1, shuff
 # Prikaz TESTING podatkov 
 # GLEJ test_data.py
 
+end_data_prep = time.time()
+print(f'DATA PREPARATION duration: {(end_data_prep - start):.4f}, s')
 
 # 2) MODEL
 model = UNet_model_3().to(device)
@@ -97,7 +100,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) # Adam
 
 
 # 4) TRAINING
-
+print("\nTRAINING PHASE")
 if len(train_rgb_loader) == len(train_depth_loader) and len(train_depth_loader) == len(train_depth_down_loader):
     print("Proceed")
 else:
@@ -109,12 +112,7 @@ print("len(train_rgb_loader): ", n_total_steps)
 loss_plot = []
 for epoch in range(num_epochs):
     for i, (rgb, depth_down, depth_correct) in enumerate(zip(train_rgb_loader, train_depth_down_loader, train_depth_loader)):
-        tries = 150
-        
-        # Just 5 tries
-        if i > tries: 
-            print("THE END OF TRAINING")
-            break
+        tries = n_total_steps - 1
         
         # rgb = input 1
         # depth_down = input 2
@@ -141,7 +139,7 @@ for epoch in range(num_epochs):
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
         # Prikaz rezultatov v zadnjo
-        if i == tries:
+        if i == tries - 1:
             with torch.no_grad():
                 # show the both outputs
                 fig, axes = plt.subplots(1, 2)
@@ -156,6 +154,11 @@ for epoch in range(num_epochs):
                 for ax in axes:
                     ax.axis('off')
                 plt.show()
+                print("THE END OF TRAINING")
+                break
+
+end_training = time.time()
+print(f'TRAINING duration: {(end_training - end_data_prep):.4f}, s')
 
 plt.plot(loss_plot)
 plt.ylabel("LOSS")
@@ -194,9 +197,9 @@ with torch.no_grad():
         
         
         # Show some results
-        if i == 0:
-            print(depth_correct_T[0, 0, :2, :2])
-            print(depth_predicted_T[0, 0, :2, :2])
+        #if i == 0:
+            #print(depth_correct_T[0, 0, :2, :2])
+            #print(depth_predicted_T[0, 0, :2, :2])
         
         # Calculate accuracy
         similarity_1 = similarity_percentage(depth_correct_T, depth_predicted_T, threshold=0.01) # 1% error allowed
@@ -219,8 +222,11 @@ print(f"Accuracy (5% error): {cnn_accuracy_5:.1f}%")
 # Save the model under a name
 
 
+end_testing = time.time()
+print(f'TESTING duration: {(end_testing - end_training):.4f}, s')
+
 end = time.time()
-print(f'{(end - start):.4f}, s')
+print(f'\nDURATION of whole process: {(end - start):.4f}, s')
 
 
 # na strezniku lahko treniramo
