@@ -23,8 +23,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper - parameters
 num_epochs = 1
-batch_size = 1
-learning_rate = 0.001
+batch_size_train = 1
+learning_rate = 0.0001
 
 # 1) DATASET
 
@@ -73,13 +73,13 @@ train_depth_dataset, test_depth_dataset = train_test_split(depth_dataset, test_s
 train_depth_down_dataset, test_depth_down_dataset = train_test_split(depth_down_dataset, test_size = 0.05, random_state=1) 
 
 # DataLoader
-train_rgb_loader = DataLoader(train_rgb_dataset, batch_size=4, shuffle=False) # change 'Batch Sizes' !
+train_rgb_loader = DataLoader(train_rgb_dataset, batch_size=batch_size_train, shuffle=False) # change 'Batch Sizes' !
 test_rgb_loader = DataLoader(test_rgb_dataset, batch_size=1, shuffle=False) 
 
-train_depth_loader = DataLoader(train_depth_dataset, batch_size=4, shuffle=False) 
+train_depth_loader = DataLoader(train_depth_dataset, batch_size=batch_size_train, shuffle=False) 
 test_depth_loader = DataLoader(test_depth_dataset, batch_size=1, shuffle=False) 
 
-train_depth_down_loader = DataLoader(train_depth_down_dataset, batch_size=4, shuffle=False)
+train_depth_down_loader = DataLoader(train_depth_down_dataset, batch_size=batch_size_train, shuffle=False)
 test_depth_down_loader = DataLoader(test_depth_down_dataset, batch_size=1, shuffle=False) 
 
 # Prikaz TESTING podatkov 
@@ -100,11 +100,29 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) # Adam
 
 
 # 4) TRAINING
+
 print("\nTRAINING PHASE")
 if len(train_rgb_loader) == len(train_depth_loader) and len(train_depth_loader) == len(train_depth_down_loader):
     print("Proceed")
 else:
     print("Error! - the lenght of DataLoaders isn't the same!")
+
+
+def showResult(predicted, correct):
+    # show the both outputs
+    fig, axes = plt.subplots(1, 2)
+    print(predicted[0][0].shape, correct[0][0].shape)
+    
+    axes[0].imshow(predicted[0][0], cmap='gray')
+    axes[0].set_title('Predicted')
+            
+    axes[1].imshow(correct[0][0], cmap='gray')
+    axes[1].set_title('Correct')
+            
+    for ax in axes:
+        ax.axis('off')
+    plt.show()
+
 
 
 n_total_steps = len(train_rgb_loader)
@@ -132,28 +150,17 @@ for epoch in range(num_epochs):
         optimizer.zero_grad() # empty the gradients
         loss.backward() # backpropagation
         optimizer.step() # update the parameters
-        loss_plot.append(loss.item())
+        loss_plot.append(loss.item()) # add losses to a list
         
         # Print the loss
-        if (i+1) % 30 == 0: # CHANGE LATER
+        if (i+1) % 200 == 0: # CHANGE LATER
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
         # Prikaz rezultatov v zadnjo
         if i == tries - 1:
             with torch.no_grad():
                 # show the both outputs
-                fig, axes = plt.subplots(1, 2)
-                print(outputs_predicted[1][0].shape, depth_correct_output[1][0].shape)
-                # both shapes: torch.Size([4, 1, 384, 520])
-                axes[0].imshow(outputs_predicted[0][0], cmap='gray')
-                axes[0].set_title('Predicted')
-            
-                axes[1].imshow(depth_correct_output[0][0], cmap='gray')
-                axes[1].set_title('Correct')
-            
-                for ax in axes:
-                    ax.axis('off')
-                plt.show()
+                showResult(outputs_predicted, depth_correct_output )
                 print("THE END OF TRAINING")
                 break
 
@@ -227,6 +234,7 @@ print(f'TESTING duration: {(end_testing - end_training):.4f}, s')
 
 end = time.time()
 print(f'\nDURATION of whole process: {(end - start):.4f}, s')
+print(f'BATCH SIZE: {batch_size_train}, LEARNING RATE: {learning_rate}')
 
 
 # na strezniku lahko treniramo
