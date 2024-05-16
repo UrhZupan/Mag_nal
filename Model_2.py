@@ -99,8 +99,10 @@ class UNet2(nn.Module):
         #print(x.size())
         return x
 
-#rgb_input = torch.randn(1, 3, 427, 561)
+#rgb_input = torch.randn(1, 3, 106*2, 140*2)
 #depth_input = torch.randn(1, 1, 10, 10)
 #model = UNet2().to(device='cuda' if torch.cuda.is_available() else 'cpu')
 #output1 = model.forward(rgb_input, depth_input)
 #print("Output tensor size: ", output1.size())
+
+"""NALETIMO NA TEZAVO, KER JE SLIKA PREVEC POMANJSANA! INPUT SLIKA NAJ IMA VECJE X IN Y DIMENZIJE IN ZATO TRENIRAJ NA MANJSEM SAMPLE SIZEU (NE 1500)!!"""

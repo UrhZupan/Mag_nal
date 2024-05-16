@@ -11,7 +11,8 @@ import time
 import matplotlib.pyplot as plt
 
 from Dataset_separate import CustomDatasetRGB, CustomDatasetDepth
-from Model_3 import UNet3 as UNet_model_3 # originalen ZMANJSAN UNet model
+from Model_4 import UNet4 as UNet_model_4 # SE BOLJ ZMANJSAN UNet model
+#from Model_3 import UNet3 as UNet_model_3 # originalen ZMANJSAN UNet model
 #from Model_2 import UNet2 as UNet_model_2 # originalen prirejen UNet model
 #from Model_1 import UNet1 as UNet_model_1 # poenostavljen UNet model 
 
@@ -23,8 +24,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper - parameters
 num_epochs = 1
-batch_size_train = 1
-learning_rate = 0.0001
+batch_size_train = 4
+learning_rate = 0.001
 
 # 1) DATASET
 
@@ -44,7 +45,7 @@ transform_high_res_rgb = transforms.Compose([
 # Model_3: Input tensor size: torch.Size([1, 3, 427, 561]) --> Output tensor size:  torch.Size([1, 1, 228, 372])
 # Model_3: Input tensor size: torch.Size([1, 3, 106, 140]) --> Output tensor size:  torch.Size([1, 1, 64, 100])
 transform_high_res_depth = transforms.Compose([
-    transforms.Resize((64, 100)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
+    transforms.Resize((90, 124)), # TRANSFORM TO THE SAME DIMENSIONS AS MODEL OUTPUT
     transforms.ToTensor() # convert to tensor
     #, transforms.Normalize((0.5,), (0.5,))
     #, transforms.Normalize((0,), (255,)) 
@@ -89,7 +90,7 @@ end_data_prep = time.time()
 print(f'DATA PREPARATION duration: {(end_data_prep - start):.4f}, s')
 
 # 2) MODEL
-model = UNet_model_3().to(device)
+model = UNet_model_4().to(device)
 
 
 # 3) OPTIMIZER AND LOSS
@@ -153,7 +154,7 @@ for epoch in range(num_epochs):
         loss_plot.append(loss.item()) # add losses to a list
         
         # Print the loss
-        if (i+1) % 200 == 0: # CHANGE LATER
+        if (i+1) % 50 == 0: # CHANGE LATER
             print(f'epoch {epoch+1} / {num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
         # Prikaz rezultatov v zadnjo
